@@ -1,0 +1,2 @@
+2025-09-13 22:56:39,536 - INFO - Model loaded: best_model.pkl
+2025-09-13 22:56:42,082 - INFO - Prediction made: 2.46 GPA in 0.001 seconds | features={'Age': 18, 'StudyTimeWeekly': 5, 'Absences': 2, 'Tutoring': 0, 'ParentalSupport': 0, 'Extracurricular': 0, 'Sports': 0, 'Music': 0, 'Volunteering': 0, 'ParentalEducation_1': 0, 'ParentalEducation_2': 0, 'ParentalEducation_3': 0, 'ParentalEducation_4': 0}
