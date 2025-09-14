@@ -3,17 +3,19 @@ import joblib
 import pandas as pd
 import logging
 import time
-from io import StringIO
+import os
 
-st.set_page_config(page_title="Student GPA Predictor", layout="wide")
+st.set_page_config(page_title="🎓 Student GPA Predictor", layout="wide")
 
-# Buffer de logs en memoria
-log_buffer = StringIO()
+os.makedirs("logs", exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.StreamHandler(log_buffer)]
+    handlers=[
+        logging.FileHandler("logs/app.log"),
+        logging.StreamHandler()
+    ]
 )
 logger = logging.getLogger(__name__)
 
@@ -25,12 +27,12 @@ def load_model():
         return model
     except Exception as e:
         logger.error(f"Error al cargar el modelo: {e}")
-        st.error("No se pudo cargar el modelo. Verifica el archivo best_model.pkl")
+        st.error("⚠️ No se pudo cargar el modelo. Verifica el archivo best_model.pkl")
         return None
 
 model = load_model()
 
-st.title("Student GPA Predictor")
+st.title("🎓 Student GPA Predictor")
 logger.info("Aplicación GPA Predictor iniciada")
 
 view = st.sidebar.selectbox("Selecciona la vista", ["Estudiante", "Coordinador", "Logs"])
@@ -60,7 +62,7 @@ if view in ["Estudiante", "Coordinador"]:
         Music = 1 if st.checkbox("🎵 Música") else 0
         Volunteering = 1 if st.checkbox("🤝 Voluntariado") else 0
 
-    if st.button("Calcular GPA") and model is not None:
+    if st.button("📌 Calcular GPA") and model is not None:
         start_time = time.time()
         try:
             input_dict = {
@@ -87,12 +89,60 @@ if view in ["Estudiante", "Coordinador"]:
             latency = time.time() - start_time
             logger.info(f"Predicción realizada | GPA={pred_gpa} | Vista={view} | Latencia={latency:.3f}s")
 
-            st.metric("GPA Predicho", f"{pred_gpa:.2f}")
+            st.metric("🎯 GPA Predicho", f"{pred_gpa:.2f}")
+
+            if pred_gpa >= 3.5: grade, color = "A", "green"
+            elif pred_gpa >= 3.0: grade, color = "B", "blue"
+            elif pred_gpa >= 2.5: grade, color = "C", "orange"
+            elif pred_gpa >= 2.0: grade, color = "D", "red"
+            else: grade, color = "F", "purple"
+
+            st.markdown(
+                f"""
+                <div style="text-align:center; font-size:36px; font-weight:bold;">
+                    <span style="color:{'green' if grade=='A' else '#ccc'};">A</span>&nbsp;&nbsp;
+                    <span style="color:{'blue' if grade=='B' else '#ccc'};">B</span>&nbsp;&nbsp;
+                    <span style="color:{'orange' if grade=='C' else '#ccc'};">C</span>&nbsp;&nbsp;
+                    <span style="color:{'red' if grade=='D' else '#ccc'};">D</span>&nbsp;&nbsp;
+                    <span style="color:{'purple' if grade=='F' else '#ccc'};">F</span>
+                </div>
+                <div style="text-align:center; font-size:64px; font-weight:bold; color:{color}; margin-top:10px;">
+                    {grade}
+                </div>
+                """, unsafe_allow_html=True
+            )
+
+            if view == "Estudiante":
+                st.subheader("💡 Consejos motivacionales y recomendaciones")
+                if pred_gpa < 3.0:
+                    st.success("¡Puedes mejorar! Aquí algunas acciones para aumentar tu GPA:")
+                    st.write("- Incrementa gradualmente tus horas de estudio semanales.")
+                    st.write("- Participa en tutorías para reforzar tus conocimientos.")
+                    st.write("- Reduce ausencias y mantén constancia en clases.")
+                    st.write("- Únete a actividades extracurriculares que te motiven.")
+                else:
+                    st.success("¡Excelente desempeño! Mantén estos hábitos:")
+                    st.write("- Continúa con tu dedicación al estudio.")
+                    st.write("- Participa en actividades que disfrutes y te inspiren.")
+                    st.write("- Comparte tus estrategias exitosas con compañeros.")
+
+            if view == "Coordinador":
+                st.subheader("📌 Análisis para Coordinadores")
+                if pred_gpa < 3.0:
+                    st.warning("Estudiante identificado con riesgo académico.")
+                    st.write("- Considerar seguimiento personalizado y tutorías.")
+                    st.write("- Ofrecer recursos motivacionales y programas de apoyo.")
+                else:
+                    st.info("Estudiante con desempeño adecuado. Mantener seguimiento motivacional.")
 
         except Exception as e:
             logger.error(f"Error en la predicción: {e}")
-            st.error("Ocurrió un error al realizar la predicción.")
+            st.error("⚠️ Ocurrió un error al realizar la predicción.")
 
 if view == "Logs":
-    st.subheader("Logs en tiempo real")
-    st.text(log_buffer.getvalue())
+    st.subheader("📜 Logs completos de la aplicación")
+    if os.path.exists("logs/app.log"):
+        with open("logs/app.log", "r") as f:
+            st.text(f.read())
+    else:
+        st.info("No hay logs todavía.")
