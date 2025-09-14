@@ -5,6 +5,8 @@ import logging
 import time
 import os
 
+st.set_page_config(page_title="🎓 Student GPA Predictor", layout="wide")
+
 os.makedirs("logs", exist_ok=True)
 
 logging.basicConfig(
@@ -30,7 +32,6 @@ def load_model():
 
 model = load_model()
 
-st.set_page_config(page_title="🎓 Student GPA Predictor", layout="wide")
 st.title("🎓 Student GPA Predictor")
 logger.info("Aplicación GPA Predictor iniciada")
 
@@ -54,11 +55,11 @@ with col1:
     )
 
 with col2:
-    Tutoring = 1 if st.checkbox("👩‍🏫 Tutoría", value=False) else 0
-    Extracurricular = 1 if st.checkbox("🎭 Actividades Extracurriculares", value=False) else 0
-    Sports = 1 if st.checkbox("⚽ Deportes", value=False) else 0
-    Music = 1 if st.checkbox("🎵 Música", value=False) else 0
-    Volunteering = 1 if st.checkbox("🤝 Voluntariado", value=False) else 0
+    Tutoring = 1 if st.checkbox("👩‍🏫 Tutoría") else 0
+    Extracurricular = 1 if st.checkbox("🎭 Actividades Extracurriculares") else 0
+    Sports = 1 if st.checkbox("⚽ Deportes") else 0
+    Music = 1 if st.checkbox("🎵 Música") else 0
+    Volunteering = 1 if st.checkbox("🤝 Voluntariado") else 0
 
 if st.button("📌 Calcular GPA") and model is not None:
     start_time = time.time()
@@ -82,15 +83,19 @@ if st.button("📌 Calcular GPA") and model is not None:
             if col not in df_input.columns:
                 df_input[col] = 0
         df_input = df_input[model_columns]
+
         pred_gpa = round(model.predict(df_input)[0], 2)
         latency = time.time() - start_time
         logger.info(f"Predicción realizada | GPA={pred_gpa} | Vista={view} | Latencia={latency:.3f}s")
+
         st.metric("🎯 GPA Predicho", f"{pred_gpa:.2f}")
-        if pred_gpa >= 3.5: grade = "A"; color="green"
-        elif pred_gpa >= 3.0: grade="B"; color="blue"
-        elif pred_gpa >= 2.5: grade="C"; color="orange"
-        elif pred_gpa >= 2.0: grade="D"; color="red"
-        else: grade="F"; color="purple"
+
+        if pred_gpa >= 3.5: grade, color = "A", "green"
+        elif pred_gpa >= 3.0: grade, color = "B", "blue"
+        elif pred_gpa >= 2.5: grade, color = "C", "orange"
+        elif pred_gpa >= 2.0: grade, color = "D", "red"
+        else: grade, color = "F", "purple"
+
         st.markdown(
             f"""
             <div style="text-align:center; font-size:36px; font-weight:bold;">
@@ -105,7 +110,8 @@ if st.button("📌 Calcular GPA") and model is not None:
             </div>
             """, unsafe_allow_html=True
         )
-        if view=="Estudiante":
+
+        if view == "Estudiante":
             st.subheader("💡 Consejos motivacionales y recomendaciones")
             if pred_gpa < 3.0:
                 st.success("¡Puedes mejorar! Aquí algunas acciones para aumentar tu GPA:")
@@ -118,7 +124,8 @@ if st.button("📌 Calcular GPA") and model is not None:
                 st.write("- Continúa con tu dedicación al estudio.")
                 st.write("- Participa en actividades que disfrutes y te inspiren.")
                 st.write("- Comparte tus estrategias exitosas con compañeros.")
-        if view=="Coordinador":
+
+        if view == "Coordinador":
             st.subheader("📌 Análisis para Coordinadores")
             if pred_gpa < 3.0:
                 st.warning("Estudiante identificado con riesgo académico.")
@@ -126,6 +133,7 @@ if st.button("📌 Calcular GPA") and model is not None:
                 st.write("- Ofrecer recursos motivacionales y programas de apoyo.")
             else:
                 st.info("Estudiante con desempeño adecuado. Mantener seguimiento motivacional.")
+
     except Exception as e:
         logger.error(f"Error en la predicción: {e}")
         st.error("⚠️ Ocurrió un error al realizar la predicción.")
@@ -135,4 +143,6 @@ if view == "Coordinador":
         st.subheader("📜 Últimos logs del sistema")
         with open("logs/app.log", "r") as f:
             lines = f.readlines()[-10:]
-        st.text("".join(lines))
+        st.text("".join(lines) if lines else "No hay registros en los logs aún.")
+    else:
+        st.info("No hay archivo de logs todavía.")
